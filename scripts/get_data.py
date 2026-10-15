@@ -20,11 +20,13 @@ DOWNLOAD_ANNOTATIONS     = True    # small files: beat/downbeat annotations of b
 DOWNLOAD_UNCOMMON_AUDIO  = True    # YouTube audio of the uncommon-meter dataset (114 tracks)
 DOWNLOAD_HARMONIX_AUDIO  = False   # YouTube audio of Harmonix (large, mostly 4/4 -> optional control set)
  
-LIMIT = 5            # only download the first N tracks of each audio set; 0 = download everything
+LIMIT_unco = 5
+LIMIT_harmo = 5            # only download the first N tracks of each audio set; 0 = download everything
+
 MIN_ALIGNMENT = 0.95 # Harmonix only: skip tracks whose YouTube audio is poorly aligned with the annotations
 # ===================================================================================
  
-DATA = PROJECT_DIR / "data"
+DATA = PROJECT_DIR / "Data"
 HARMONIX_ZIP = "https://github.com/urinieto/harmonixset/archive/refs/heads/main.zip"
  
  
@@ -78,7 +80,7 @@ def get_uncommon_audio():
     with open(DATA / "uncommon" / "metadata.csv", encoding="utf-8-sig") as f:   # utf-8-sig: file has a BOM
         rows = list(csv.DictReader(f))
     jobs = [(r["youtube_id"], r["youtube_url"]) for r in rows]
-    download_audio(jobs[:LIMIT] if LIMIT else jobs, DATA / "uncommon" / "audio")
+    download_audio(jobs[:LIMIT_unco] if LIMIT_unco else jobs, DATA / "uncommon" / "audio")
  
  
 def get_harmonix_audio():
@@ -88,7 +90,7 @@ def get_harmonix_audio():
     with open(base / "youtube_urls.csv", encoding="utf-8-sig") as f:
         urls = {r["File"]: r["URL"] for r in csv.DictReader(f)}
     names = sorted(n for n in urls if score.get(n, 0) >= MIN_ALIGNMENT)   # keep well-aligned tracks only
-    download_audio([(n, urls[n]) for n in (names[:LIMIT] if LIMIT else names)], base / "audio")
+    download_audio([(n, urls[n]) for n in (names[:LIMIT_harmo] if LIMIT_harmo else names)], base / "audio")
  
  
 # ------------------------------------ run everything ------------------------------------

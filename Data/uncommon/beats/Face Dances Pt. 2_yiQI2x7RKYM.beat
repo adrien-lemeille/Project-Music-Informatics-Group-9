@@ -1,0 +1,820 @@
+{
+  "audioFileName": "Face Dances Pt. 2_yiQI2x7RKYM.mp3",
+  "offsetMs": 450,
+  "measures": [
+    {
+      "id": "m_0_1773200416638",
+      "index": 0,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      },
+      "tempo": {
+        "bpm": 130,
+        "baseNote": "quarter"
+      }
+    },
+    {
+      "id": "m_1_1773200416638",
+      "index": 1,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_2_1773200416638",
+      "index": 2,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_3_1773200416638",
+      "index": 3,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_4_1773200416638",
+      "index": 4,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_5_1773200416638",
+      "index": 5,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_6_1773200416638",
+      "index": 6,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_7_1773200416638",
+      "index": 7,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_8_1773200416638",
+      "index": 8,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_9_1773200416638",
+      "index": 9,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_10_1773200416638",
+      "index": 10,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_11_1773200416638",
+      "index": 11,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_12_1773200416638",
+      "index": 12,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_13_1773200416638",
+      "index": 13,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_14_1773200416638",
+      "index": 14,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_15_1773200416638",
+      "index": 15,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_16_1773200416638",
+      "index": 16,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_17_1773200416638",
+      "index": 17,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_18_1773200416638",
+      "index": 18,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_19_1773200416638",
+      "index": 19,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_449_0",
+      "index": 20,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_211_1",
+      "index": 21,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_274_2",
+      "index": 22,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_179_3",
+      "index": 23,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_469_4",
+      "index": 24,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_917_5",
+      "index": 25,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_719_6",
+      "index": 26,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_427_7",
+      "index": 27,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_343_8",
+      "index": 28,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470163_260_9",
+      "index": 29,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_3_0",
+      "index": 30,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_26_1",
+      "index": 31,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_535_2",
+      "index": 32,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_868_3",
+      "index": 33,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_861_4",
+      "index": 34,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_13_5",
+      "index": 35,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_966_6",
+      "index": 36,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_97_7",
+      "index": 37,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_540_8",
+      "index": 38,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470528_544_9",
+      "index": 39,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_609_0",
+      "index": 40,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_951_1",
+      "index": 41,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_551_2",
+      "index": 42,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_550_3",
+      "index": 43,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_376_4",
+      "index": 44,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_410_5",
+      "index": 45,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_631_6",
+      "index": 46,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_481_7",
+      "index": 47,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_426_8",
+      "index": 48,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200470790_394_9",
+      "index": 49,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_416_0",
+      "index": 50,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_676_1",
+      "index": 51,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_712_2",
+      "index": 52,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_944_3",
+      "index": 53,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_60_4",
+      "index": 54,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_374_5",
+      "index": 55,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_232_6",
+      "index": 56,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_127_7",
+      "index": 57,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_675_8",
+      "index": 58,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200542974_927_9",
+      "index": 59,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_63_0",
+      "index": 60,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_177_1",
+      "index": 61,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_695_2",
+      "index": 62,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_316_3",
+      "index": 63,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_871_4",
+      "index": 64,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_166_5",
+      "index": 65,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_100_6",
+      "index": 66,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_993_7",
+      "index": 67,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_990_8",
+      "index": 68,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200602408_319_9",
+      "index": 69,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_123_0",
+      "index": 70,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_121_1",
+      "index": 71,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_194_2",
+      "index": 72,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_743_3",
+      "index": 73,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_190_4",
+      "index": 74,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_561_5",
+      "index": 75,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_872_6",
+      "index": 76,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_184_7",
+      "index": 77,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_521_8",
+      "index": 78,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200603091_31_9",
+      "index": 79,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200623892_449_0",
+      "index": 80,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200623892_158_1",
+      "index": 81,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200623892_160_2",
+      "index": 82,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200623892_316_3",
+      "index": 83,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200623892_871_4",
+      "index": 84,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200623892_730_5",
+      "index": 85,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200623892_113_6",
+      "index": 86,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200623892_10_7",
+      "index": 87,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1773200623892_911_8",
+      "index": 88,
+      "timeSignature": {
+        "num": 5,
+        "den": 4
+      }
+    }
+  ],
+  "warpMarkers": [
+    {
+      "id": "warp_8_0_1773200479888",
+      "measureIndex": 8,
+      "beatOffset": 0,
+      "audioTimeMs": 18871.538461538465
+    },
+    {
+      "id": "warp_12_0_1773200500515",
+      "measureIndex": 12,
+      "beatOffset": 0,
+      "audioTimeMs": 28062.3076923077
+    },
+    {
+      "id": "warp_17_0_1773200511572",
+      "measureIndex": 17,
+      "beatOffset": 0,
+      "audioTimeMs": 39560.769230769234
+    },
+    {
+      "id": "warp_23_0_1773200517606",
+      "measureIndex": 23,
+      "beatOffset": 0,
+      "audioTimeMs": 53366.92307692306
+    },
+    {
+      "id": "warp_27_0_1773200536147",
+      "measureIndex": 27,
+      "beatOffset": 0,
+      "audioTimeMs": 62547.69230769228
+    },
+    {
+      "id": "warp_36_0_1773200549065",
+      "measureIndex": 36,
+      "beatOffset": 0,
+      "audioTimeMs": 83286.92307692308
+    },
+    {
+      "id": "warp_37_0_1773200552123",
+      "measureIndex": 37,
+      "beatOffset": 0,
+      "audioTimeMs": 85564.61538461539
+    },
+    {
+      "id": "warp_42_0_1773200568791",
+      "measureIndex": 42,
+      "beatOffset": 0,
+      "audioTimeMs": 97083.07692307695
+    },
+    {
+      "id": "warp_44_0_1773200573526",
+      "measureIndex": 44,
+      "beatOffset": 0,
+      "audioTimeMs": 101668.46153846158
+    },
+    {
+      "id": "warp_48_0_1773200583525",
+      "measureIndex": 48,
+      "beatOffset": 0,
+      "audioTimeMs": 110879.23076923082
+    },
+    {
+      "id": "warp_50_0_1773200588414",
+      "measureIndex": 50,
+      "beatOffset": 0,
+      "audioTimeMs": 115444.61538461545
+    },
+    {
+      "id": "warp_60_0_1773200615734",
+      "measureIndex": 60,
+      "beatOffset": 0,
+      "audioTimeMs": 134799.23076923084
+    },
+    {
+      "id": "warp_70_0_1773200630075",
+      "measureIndex": 70,
+      "beatOffset": 0,
+      "audioTimeMs": 156923.07692307702
+    },
+    {
+      "id": "warp_74_0_1773200643160",
+      "measureIndex": 74,
+      "beatOffset": 0,
+      "audioTimeMs": 166123.84615384627
+    },
+    {
+      "id": "warp_81_0_1773200655864",
+      "measureIndex": 81,
+      "beatOffset": 0,
+      "audioTimeMs": 182237.69230769246
+    },
+    {
+      "id": "warp_86_0_1773200668851",
+      "measureIndex": 86,
+      "beatOffset": 0,
+      "audioTimeMs": 193756.15384615402
+    }
+  ]
+}

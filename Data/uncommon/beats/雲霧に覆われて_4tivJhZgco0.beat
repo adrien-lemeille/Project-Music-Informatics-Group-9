@@ -1,0 +1,122 @@
+{
+  "audioFileName": "雲霧に覆われて_4tivJhZgco0.mp3",
+  "offsetMs": 980,
+  "measures": [
+    {
+      "id": "m_0_1772893825177",
+      "index": 0,
+      "timeSignature": {
+        "num": 7,
+        "den": 4
+      },
+      "tempo": {
+        "bpm": 110,
+        "baseNote": "quarter"
+      }
+    },
+    {
+      "id": "m_1_1772893825177",
+      "index": 1,
+      "timeSignature": {
+        "num": 6,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_2_1772893825177",
+      "index": 2,
+      "timeSignature": {
+        "num": 7,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_3_1772893825177",
+      "index": 3,
+      "timeSignature": {
+        "num": 6,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_4_1772893825177",
+      "index": 4,
+      "timeSignature": {
+        "num": 7,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_5_1772893825177",
+      "index": 5,
+      "timeSignature": {
+        "num": 6,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_6_1772893825177",
+      "index": 6,
+      "timeSignature": {
+        "num": 7,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_7_1772893825177",
+      "index": 7,
+      "timeSignature": {
+        "num": 6,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_8_1772893825177",
+      "index": 8,
+      "timeSignature": {
+        "num": 7,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_9_1772893825177",
+      "index": 9,
+      "timeSignature": {
+        "num": 7,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_10_1772893825177",
+      "index": 10,
+      "timeSignature": {
+        "num": 7,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_11_1772893825177",
+      "index": 11,
+      "timeSignature": {
+        "num": 7,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_12_1772893825177",
+      "index": 12,
+      "timeSignature": {
+        "num": 7,
+        "den": 4
+      }
+    }
+  ],
+  "warpMarkers": [
+    {
+      "id": "warp_7_0_1772893922756",
+      "measureIndex": 7,
+      "beatOffset": 0,
+      "audioTimeMs": 26100.909090909085
+    }
+  ]
+}

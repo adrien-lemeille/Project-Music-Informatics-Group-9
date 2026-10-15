@@ -1,0 +1,4 @@
+python parse_beats.py
+python analyze_beat_data.py
+python export_metadata_csv.py
+python update_dataset_docs.py

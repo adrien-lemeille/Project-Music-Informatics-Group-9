@@ -1,0 +1,235 @@
+{
+  "audioFileName": "あの日の景色を探して_bGqOrl5h9IM.mp3",
+  "offsetMs": 450,
+  "measures": [
+    {
+      "id": "m_0_1772937767586",
+      "index": 0,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      },
+      "tempo": {
+        "bpm": 80,
+        "baseNote": "quarter"
+      }
+    },
+    {
+      "id": "m_1_1772937767586",
+      "index": 1,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_2_1772937767586",
+      "index": 2,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_3_1772937767586",
+      "index": 3,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_4_1772937767586",
+      "index": 4,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_5_1772937767586",
+      "index": 5,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_6_1772937767586",
+      "index": 6,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_7_1772937767586",
+      "index": 7,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_8_1772937767586",
+      "index": 8,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_9_1772937767586",
+      "index": 9,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_10_1772937767586",
+      "index": 10,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_11_1772937767586",
+      "index": 11,
+      "timeSignature": {
+        "num": 9,
+        "den": 8
+      }
+    },
+    {
+      "id": "m_12_1772937767586",
+      "index": 12,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_13_1772937767586",
+      "index": 13,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_14_1772937767586",
+      "index": 14,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_15_1772937767586",
+      "index": 15,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_16_1772937767586",
+      "index": 16,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_17_1772937767586",
+      "index": 17,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_18_1772937767586",
+      "index": 18,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_19_1772937767586",
+      "index": 19,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1772937868635_610_0",
+      "index": 20,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1772937868635_571_1",
+      "index": 21,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1772937868635_785_2",
+      "index": 22,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1772937868635_745_3",
+      "index": 23,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1772937868635_392_4",
+      "index": 24,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1772937868635_764_5",
+      "index": 25,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1772937868635_62_6",
+      "index": 26,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    },
+    {
+      "id": "m_1772937868635_927_7",
+      "index": 27,
+      "timeSignature": {
+        "num": 4,
+        "den": 4
+      }
+    }
+  ],
+  "warpMarkers": []
+}

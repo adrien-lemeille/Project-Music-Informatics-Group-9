@@ -18,7 +18,7 @@ PROJECT_DIR = Path(__file__).resolve().parent.parent   # <-- your project folder
  
 DOWNLOAD_ANNOTATIONS     = True    # small files: beat/downbeat annotations of both datasets
 DOWNLOAD_UNCOMMON_AUDIO  = True    # YouTube audio of the uncommon-meter dataset (114 tracks)
-DOWNLOAD_HARMONIX_AUDIO  = False   # YouTube audio of Harmonix (large, mostly 4/4 -> optional control set)
+DOWNLOAD_HARMONIX_AUDIO  = True   # YouTube audio of Harmonix (large, mostly 4/4 -> optional control set)
  
 LIMIT_unco = 5
 LIMIT_harmo = 5            # only download the first N tracks of each audio set; 0 = download everything

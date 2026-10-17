@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from scripts.get_data_frame import get_uncommon_dataframe
+
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa
 import librosa.display
+import pydub
+import csv, io, urllib.request, zipfile
+import sys
+
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_DIR))
+
+from scripts.get_data_frame import get_uncommon_dataframe
 
 import pydub
 
@@ -13,14 +21,14 @@ import csv, io, urllib.request, zipfile
 
 t_begin = 0
 
-t_end = 50
+t_end = 2
 
 df_uncommon = get_uncommon_dataframe()
 
 db_times_fifteen_steps=df_uncommon.loc[df_uncommon['track_id']=='xpqk9MD6vLM','downbeat_times']
 db_times_fifteen_steps = np.array(db_times_fifteen_steps.iloc[0])
 
-db_10_20 = db_times_fifteen_steps[(db_times_fifteen_steps >= t_begin) & (db_times_fifteen_steps < t_end)]-t_begin
+db_truncated = db_times_fifteen_steps[(db_times_fifteen_steps >= t_begin) & (db_times_fifteen_steps < t_end)]-t_begin
 
 
 # The following makes the plot look nice
@@ -34,8 +42,6 @@ plt.rcParams.update(params)
 
 
 
-
-PROJECT_DIR = Path(__file__).resolve().parent.parent
 DATA = PROJECT_DIR / "Data"
 
 file_name = DATA / "uncommon" / "audio" / "xpqk9MD6vLM.wav"
@@ -103,7 +109,7 @@ plt.xlabel("Time (s)")
 plt.ylabel("Amplitude")
 plt.plot(T_novelty,novelety)
 plt.vlines(onset_times, ymin=0, ymax=10, colors='red')
-plt.vlines(db_10_20, ymin=0, ymax=10, colors='orange')
+plt.vlines(db_truncated, ymin=0, ymax=10, colors='orange')
 plt.grid()
 plt.show()
 
@@ -120,27 +126,31 @@ def find_closest_onset (L_onset, L_downbeats):
     L_closest_onset = np.ones (n)*L_onset[0]
     err_best = np.abs(L_closest_onset - L_downbeats)
     
+    i_start=0
+    
     
     for k in range (n):
 
         
-        for i in range (len(L_onset)):
+        for i in range (i_start,len(L_onset)):
             err = np.abs(L_onset[i]-L_downbeats[k])
             
             if err<err_best[k]:
                 L_closest_onset[k] = L_onset[i]
                 err_best[k] = err
+                i_start = i
+                
+            if err > err_best[k]:
+                break
                 
     return (L_closest_onset, err_best)
     
-L_closest_onset, err = find_closest_onset (onset_times,db_10_20)
+L_closest_onset, err = find_closest_onset (onset_times,db_truncated)
 
 print (err)
 
 print(np.round(err * 1000))          # signed errors in ms
 print("median error (ms):", np.median(err) * 1000)
-
-
 
 
 

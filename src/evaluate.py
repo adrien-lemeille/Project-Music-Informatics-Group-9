@@ -37,4 +37,4 @@ def eval_downbeats(ref, est, trim=True):
     F = mir_eval.beat.f_measure(ref, est)                       # 70 ms windows
     cmlc, cmlt, amlc, amlt = mir_eval.beat.continuity(ref, est)
     
-    return dict(F=F, CMLc=cmlc, CMLt=cmlt, AMLc=amlc, AMLt=amlt)
+    return F, cmlc, cmlt, amlc, amlt

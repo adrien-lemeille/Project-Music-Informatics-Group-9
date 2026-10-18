@@ -12,11 +12,13 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import sys
+import pandas as pd
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_DIR))
 
-from scripts.get_data_frame import get_uncommon_dataframe
+from scripts.get_data_frame import get_uncommon_dataframe,get_harmonix_dataframe
+from src.evaluate import eval_downbeats
 
 import pydub
 
@@ -87,16 +89,81 @@ def dp_beat_estimation ( y, Fs , hop=256 , lam = 100.0 ):
     delta = librosa.onset.onset_strength(y=y, sr=Fs, hop_length=hop)
     
     #initial estimate of the period (we multiply it by 2 because during testing the )
-    bpm = 1*float(librosa.feature.tempo(onset_envelope=delta, sr=Fs, hop_length=hop)[0])
+    bpm = float(librosa.feature.tempo(onset_envelope=delta, sr=Fs, hop_length=hop)[0])*2
 
     period = (Fs/hop) * 60/bpm
     
     beat_index = dp_beats(delta , period , lam = 100.0)
     
     #For this approximation we will take the amplitude of the beats in order to estimate the down beats (+- 2 frames)
-    amp_beats = [ delta[max(0, b - 2): min(b + 3 , len(delta))].max() for b in beat_index]
+    amp_beats = np.array([ delta[max(0, b - 2): min(b + 3 , len(delta))].max() for b in beat_index])
     
-    return(beat_index, amp_beats)
+    return(beat_index*hop/Fs, amp_beats)
+
+def dp_downbeat_estimation ( y, Fs , hop=256 , lam = 100.0, candidtes = [3,4,5,6,7,8,9,11,13] ):
+    
+    beat_index, amp_beats = dp_beat_estimation ( y=y, Fs=Fs , hop=hop , lam=lam )
+    
+    amp_beats = (amp_beats - amp_beats.mean()) / (amp_beats.std() + 1e-12)
+    
+    n=len(beat_index)
+    
+    best_score = -np.inf
+    best_k = None
+    best_p = None
+    db_best = np.array([])
+    
+    #enumerate all possible beats per bar possible candidates
+    for k in candidtes :
+        
+        
+        for phase in range(k):
+            
+            
+            mask = np.zeros(n, bool); mask[phase::k] = True
+            n1, n2 = mask.sum(), (~mask).sum()
+            down = amp_beats[phase::k]
+            other =amp_beats[~mask]
+            score = (down.mean() - other.mean()) / np.sqrt(1.0 / n1 + 1.0 / n2)
+            
+            #print(k,phase,score)
+            
+            score = np.mean(down)
+            
+            #print(k,phase,score)
+            """
+            # Candidate downbeat amplitudes
+            down = amp_beats[phase::k]
+
+            if len(down) < 2:
+                continue
+
+            # Mean accent strength
+            intensity = np.mean(down)
+
+            # Regularity of accents across measures
+            variability = np.mean(np.abs(down - intensity))
+
+            # S5 score
+            reg=0.5
+            score = intensity - reg * variability
+            """
+            
+            
+            
+            
+            print(k,phase,score)
+            
+            if score>best_score:
+                
+                best_score = score
+                best_p = phase
+                best_k = k
+                db_best = beat_index[phase::k]
+                
+    return db_best, best_k, best_p, best_score
+            
+            
 
 
 
@@ -105,18 +172,20 @@ def dp_beat_estimation ( y, Fs , hop=256 , lam = 100.0 ):
 
 
 
-
-track_id = 'GRMLpJ-v7vk'
+track_id = 'NNMR5MCpYGU'
 file_id = track_id+".wav"
+
 
 
 t_begin = 0
 
-t_end = 20
+t_end = 200
 
 df_uncommon = get_uncommon_dataframe()
+df_harmonix = get_harmonix_dataframe()
+df_merged = pd.concat([df_uncommon, df_harmonix], ignore_index=True, sort=False)
 
-db_times_track=df_uncommon.loc[df_uncommon['track_id']==track_id,'downbeat_times']
+db_times_track=df_merged.loc[df_merged['track_id']==track_id,'downbeat_times']
 db_times_track = np.array(db_times_track.iloc[0])
 
 db_truncated = db_times_track[(db_times_track >= t_begin) & (db_times_track < t_end)]-t_begin
@@ -130,26 +199,27 @@ DATA = PROJECT_DIR / "Data"
 
 file_name = DATA / "uncommon" / "audio" / file_id
 
-fifteen_steps = pydub.AudioSegment.from_file(file_name, format="wav")
-fifteen_steps = fifteen_steps.set_channels(1)
+track = pydub.AudioSegment.from_file(file_name, format="wav")
+track = track.set_channels(1)
 
 # Sample rate
-Fs = fifteen_steps.frame_rate
+Fs = track.frame_rate
 
 # Raw audio data
-fifteen_steps_array = np.array(fifteen_steps.get_array_of_samples()) * 1.0
+track_array = np.array(track.get_array_of_samples()) * 1.0
 
 # Extract the interval from 10 to 11 seconds
 n_start = t_begin * Fs
 n_end = t_end * Fs
-fifteen_steps_array = fifteen_steps_array[n_start:n_end]
+track_array = track_array[n_start:n_end]
 
 #normalize
-fifteen_steps_array /= np.max(np.abs(fifteen_steps_array),axis=0)
+track_array /= np.max(np.abs(track_array),axis=0)
+
 
 # Detect onsets
 onset = np.array(librosa.onset.onset_detect(
-    y=fifteen_steps_array,
+    y=track_array,
     sr=Fs,
     hop_length=256,
     units='frames'
@@ -158,7 +228,7 @@ onset = np.array(librosa.onset.onset_detect(
 
 # Novelety function
 novelety =  librosa.onset.onset_strength(
-    y=fifteen_steps_array,
+    y=track_array,
     sr=Fs,
     hop_length=256,
 )
@@ -175,21 +245,22 @@ T_novelty = librosa.frames_to_time(
     hop_length=256
 )
 
+dp_beats_est,amps = dp_beat_estimation( y=track_array, Fs=Fs , hop=256 , lam = 1.0 )
 
-dp_beat_estimation = dp_beat_estimation ( y=fifteen_steps_array, Fs=Fs , hop=256 , lam = 100.0 )*256/Fs
 
 print(dp_beat_estimation)
 print(db_truncated)
 
 # Plot
-T = np.arange(len(fifteen_steps_array)) / Fs
+T = np.arange(len(track_array)) / Fs
+
 
 
 plt.subplot(2, 1, 1)
 plt.title("Track : "+track_id)
 plt.xlabel("Time (s)")
 plt.ylabel("Amplitude")
-plt.plot(T, fifteen_steps_array)
+plt.plot(T, track_array)
 plt.vlines(onset_times, ymin=-1, ymax=1, colors='red')
 plt.grid()
 
@@ -197,9 +268,23 @@ plt.subplot(2, 1, 2)
 plt.xlabel("Time (s)")
 plt.ylabel("Amplitude")
 plt.plot(T_novelty,novelety)
-plt.vlines(dp_beat_estimation, ymin=0, ymax=10, colors='red')
+plt.vlines(dp_beats_est, ymin=0, ymax=10, colors='red')
 plt.vlines(db_truncated, ymin=0, ymax=10, colors='orange')
 plt.grid()
 plt.show()
         
         
+dp_downbeats_est, best_k, best_p, best_score = dp_downbeat_estimation ( y=track_array, Fs=Fs , lam = 10, candidtes = [3,4,5,6,8,9,11,13] )
+print(dp_downbeats_est, best_k, best_p, best_score)
+
+plt.title("comparaison of downbeats and estimates (dynamic programming)")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.plot(T_novelty,novelety)
+plt.vlines(dp_downbeats_est , ymin=0, ymax=5, colors='red')
+plt.vlines(db_truncated, ymin=0, ymax=5, colors='orange')
+plt.grid()
+plt.show()
+
+F, cmlc, cmlt, amlc, amlt = eval_downbeats(db_truncated,dp_downbeats_est)
+print(F,cmlc, cmlt, amlc, amlt)

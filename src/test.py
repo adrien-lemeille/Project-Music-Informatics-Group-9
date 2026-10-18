@@ -155,3 +155,120 @@ print("median error (ms):", np.median(err) * 1000)
 
 
 
+
+
+track_id = '8PmFTQLw3fc'
+file_id = track_id+".wav"
+
+
+
+t_begin = 0
+
+t_end = 100
+
+df_uncommon = get_uncommon_dataframe()
+
+db_times_track=df_uncommon.loc[df_uncommon['track_id']==track_id,'downbeat_times']
+db_times_track = np.array(db_times_track.iloc[0])
+
+db_truncated = db_times_track[(db_times_track >= t_begin) & (db_times_track < t_end)]-t_begin
+
+
+
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
+DATA = PROJECT_DIR / "Data"
+
+
+
+file_name = DATA / "uncommon" / "audio" / file_id
+
+track = pydub.AudioSegment.from_file(file_name, format="wav")
+track = track.set_channels(1)
+
+# Sample rate
+Fs = track.frame_rate
+
+# Raw audio data
+track_array = np.array(track.get_array_of_samples()) * 1.0
+
+# Extract the interval from 10 to 11 seconds
+n_start = t_begin * Fs
+n_end = t_end * Fs
+track_array = track_array[n_start:n_end]
+
+#normalize
+track_array /= np.max(np.abs(track_array),axis=0)
+
+
+# Detect onsets
+onset = np.array(librosa.onset.onset_detect(
+    y=track_array,
+    sr=Fs,
+    hop_length=256,
+    units='frames'
+))*1.0
+
+
+# Novelety function
+novelety =  librosa.onset.onset_strength(
+    y=track_array,
+    sr=Fs,
+    hop_length=256,
+)
+
+
+# Convert frame indices to times (seconds)
+onset_times = librosa.frames_to_time(onset, sr=Fs, hop_length=256)
+
+
+# Time vector for the novelty function
+T_novelty = librosa.frames_to_time(
+    np.arange(len(novelety)),
+    sr=Fs,
+    hop_length=256
+)
+
+dp_beats_est,amps = dp_beat_estimation( y=track_array, Fs=Fs , hop=256 , lam = 100.0 )
+
+
+print(dp_beat_estimation)
+print(db_truncated)
+
+# Plot
+T = np.arange(len(track_array)) / Fs
+
+
+
+plt.subplot(2, 1, 1)
+plt.title("Track : "+track_id)
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.plot(T, track_array)
+plt.vlines(onset_times, ymin=-1, ymax=1, colors='red')
+plt.grid()
+
+plt.subplot(2, 1, 2)
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.plot(T_novelty,novelety)
+plt.vlines(dp_beats_est, ymin=0, ymax=10, colors='red')
+plt.vlines(db_truncated, ymin=0, ymax=10, colors='orange')
+plt.grid()
+plt.show()
+        
+        
+dp_downbeats_est, best_k, best_p, best_score = dp_downbeat_estimation ( y=track_array, Fs=Fs , lam = 100.0, candidtes = [3,4,5,7,9,11,13] )
+print(dp_downbeats_est, best_k, best_p, best_score)
+
+plt.title("comparaison of downbeats and estimates (dynamic programming)")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.plot(T_novelty,novelety)
+plt.vlines(dp_downbeats_est , ymin=0, ymax=5, colors='red')
+plt.vlines(db_truncated, ymin=0, ymax=5, colors='orange')
+plt.grid()
+plt.show()
+
+F, cmlc, cmlt, amlc, amlt = eval_downbeats(db_truncated,dp_downbeats_est)
+print(F,cmlc, cmlt, amlc, amlt)
+

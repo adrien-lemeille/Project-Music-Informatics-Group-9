@@ -4,6 +4,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+HARMONIX = PROJECT_DIR / "Data/harmonix"
+UNCOMMON = PROJECT_DIR / "Data/uncommon"
+
+
 
 def contains_change(sigs):
 
@@ -22,147 +27,82 @@ def contains_change(sigs):
     return not no_change
 
 
-def get_uncommon_dataframe():
+def get_uncommon_dataframe(root=UNCOMMON):
+    """
+    root : folder containing parsed_beats/ and audio/.
 
     """
-    converts parsed_beats into a pandas data frame
+    root = Path(root)
+    rows = []
+    
+    for file in sorted((root / 'parsed_beats').glob('*.json')):
+        
+        data = json.loads(file.read_text(encoding='utf-8'))
+        measures = data.get('measures', [])
+       
+        signatures = [(int(m['time_sig_num']), int(m['time_sig_den'])) for m in measures]
+        
+        rows.append(dict(track_id=str(data['youtube_id']), dataset='uncommon_meter',
+                         audio_path=str(root / 'audio' / (str(data['youtube_id']) + '.wav')),
+                         downbeat_times=[float(m['downbeat_sec']) for m in measures],
+                         time_signatures=signatures,
+                         beats_per_bar=[a for a, _ in signatures],
+                         tempo_per_bar=[float(m['tempo_bpm']) for m in measures],
+                         contains_meter_changes=contains_change(signatures)))
+    # Une ligne du DataFrame correspond à un morceau entier.
+    return pd.DataFrame(rows)
+
+
+
+
+def get_harmonix_dataframe(root=HARMONIX):
     """
+    root : folder containing parsed_beats/ and audio/.
 
-    PROJECT_DIR = Path(__file__).resolve().parent.parent
-
-    UNCOMMON = PROJECT_DIR / "Data/uncommon"
-
+    """
+    root = Path(root)
     rows = []
-    for f in sorted((UNCOMMON / "parsed_beats").glob("*.json")):
-
-        d = json.loads(f.read_text(encoding="utf-8"))
-
-        # bars
-        ms = d["measures"]
-
-        if not ms:
+    for file in sorted((root / 'beats_and_downbeats').glob('*.txt')):
+        
+        records = [line.split() for line in file.read_text(encoding='utf-8').splitlines() if line.strip()]
+        
+        # times and position in the measure of the beats
+        times = np.array([float(r[0]) for r in records])
+        positions = np.array([int(float(r[1])) for r in records])
+        
+        #to identify down beats
+        starts = np.flatnonzero(positions == 1)
+        
+        if not len(starts):
             continue
-
-        # time signature of each bar (num, den)
-        sigs = [(m["time_sig_num"], m["time_sig_den"]) for m in ms]
-
-        # tempo of each bar
-        tempos = [m["tempo_bpm"] for m in ms]
-
-        rows.append(dict(
-            # id
-            track_id=d["youtube_id"],
-            # identify the dataset
-            dataset="uncommon_meter",
-            # path of the file
-            audio_path=str(UNCOMMON / "audio" / f"{d['youtube_id']}.wav"),
-            # downbeat times
-            downbeat_times=[m["downbeat_sec"] for m in ms],
-            # beats per bar
-            beats_per_bar=[m["time_sig_num"] for m in ms],
-            # tempos in BPM
-            tempo_per_bar=tempos,
-
-            contains_meter_changes=contains_change(sigs),
-            contains_tempo_changes=contains_change(tempos),
-        ))
-
-    df_uncommon = pd.DataFrame(rows)
-
-    return df_uncommon
+        
+        # Only completed bars can be measured reliably (last bar has unknown length)
+        counts = [int(np.max(positions[a:b])) for a, b in zip(starts[:-1], starts[1:])]
+        counts.append(None) #last bar, might delete
+        
+        #All the ones are down beats
+        downbeats = times[starts].tolist()
+        
+        tempos = [60 * n / (downbeats[i+1] - downbeats[i]) if downbeats[i+1] > downbeats[i]
+                  else np.nan for i, n in enumerate(counts[:-1])]
+        tempos.append(np.nan)
+        rows.append(dict(track_id=file.stem, dataset='harmonix',
+                         audio_path=str(root / 'audio' / (file.stem + '.wav')),
+                         downbeat_times=downbeats,
+                         time_signatures=[None] * len(downbeats),#we know only the beats per bar, not the time signature
+                         beats_per_bar=counts, tempo_per_bar=tempos,
+                         contains_meter_changes=contains_change(counts[:-1])))
+    return pd.DataFrame(rows)
 
 
-def beats_per_bar(pos):
-
-    N = len(pos)
-
-    if N == 0:
-        return []
-
-    beats_per_bar = []
-    pos_prev = pos[0]
-
-    for k in range(1, N):
-
-        if pos[k] == 1:
-            beats_per_bar.append(pos_prev)
-
-        pos_prev = pos[k]
-
-    # Add the last measure
-    beats_per_bar.append(pos_prev)
-
-    return beats_per_bar
+def get_full_dataframe(root_u=UNCOMMON,root_h=HARMONIX):
+    
+    du = get_uncommon_dataframe(root_u)
+    dh = get_harmonix_dataframe(root=root_h)
+    
+    df = pd.concat([du, dh], ignore_index=True, sort=False)
+    
+    return df[df.apply(lambda r: Path(r['audio_path']).is_file() , axis=1)].reset_index(drop=True) #We only keep the annotations that have audio files
 
 
-def tempo_per_bar(downbeat_times, beats_per_bar):
-
-    tempo_per_bar = []
-
-    # Estimate tempo from consecutive downbeats
-    for k in range(len(downbeat_times) - 1):
-        length_bar = downbeat_times[k + 1] - downbeat_times[k]
-
-        if length_bar <= 0 or beats_per_bar[k] <= 0:
-            tempo_per_bar.append(np.nan)
-        else:
-            tempo_per_bar.append(
-                round(60 * beats_per_bar[k] / length_bar)
-            )
-
-    # The last bar has no following downbeat to estimate its tempo
-    if len(downbeat_times) > 0:
-        if tempo_per_bar:
-            tempo_per_bar.append(tempo_per_bar[-1])
-        else:
-            tempo_per_bar.append(np.nan)
-
-    return tempo_per_bar
-
-
-def get_harmonix_dataframe():
-
-    PROJECT_DIR = Path(__file__).resolve().parent.parent
-    HARMONIX = PROJECT_DIR / "Data/harmonix"
-
-    rows = []
-    for f in sorted((HARMONIX / "beats_and_downbeats").glob("*.txt")):
-
-        tid = f.stem
-
-        # each line: beat_time, position_in_bar, bar_number
-        data = [l.split() for l in f.read_text().splitlines() if l.strip()]
-
-        if not data:
-            continue
-
-        t = np.array([float(r[0]) for r in data])
-        pos = np.array([int(float(r[1])) for r in data])
-
-        downbeat_times = t[np.where(pos == 1)]
-
-        beats = beats_per_bar(pos)
-        tempos = tempo_per_bar(downbeat_times, beats)
-
-        rows.append(dict(
-            # id
-            track_id=tid,
-            # identify the dataset
-            dataset="harmonix",
-            # path of the file
-            audio_path=str(HARMONIX / "audio" / f"{tid}.wav"),
-            # downbeat times
-            downbeat_times=downbeat_times.tolist(),
-            # number of beats per bar
-            beats_per_bar= [int(b) for b in beats],
-            # tempos in BPM
-            tempo_per_bar=tempos,
-
-            contains_meter_changes=contains_change(beats),
-            contains_tempo_changes=contains_change(tempos),
-        ))
-
-    df_uharmonix = pd.DataFrame(rows)
-
-    return df_uharmonix
 

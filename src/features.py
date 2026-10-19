@@ -160,7 +160,7 @@ def harmonic_balance_beats(Stft, frequencies, beats, sr, hop):
     return np.column_stack([np.log(rel), hb])
 
 
-def extract_features_track(audio_path, sr=22050, hop=256, beat_track='librosa', chords=True, normalize=True):
+def extract_features_track(audio_path, sr=22050, hop=256, beat_track='librosa', chords=True, normalize=True, compression =True):
     """Computes features of a song
 
 
@@ -211,6 +211,13 @@ def extract_features_track(audio_path, sr=22050, hop=256, beat_track='librosa', 
     n = min(len(onset), len(rms), len(centroid), chroma.shape[1])
 
     # features compiled in each frames
+    if compression:
+        frames = np.vstack([np.log1p(rms[:n]), np.log1p(onset[:n]), np.log1p(centroid[:n]), chroma[:, :n]]).T
+
+    else:
+        frames = np.vstack([rms[:n], onset[:n], centroid[:n], chroma[:, :n]]).T
+    
+    
     frames = np.vstack([rms[:n], onset[:n], centroid[:n], chroma[:, :n]]).T
 
     # per track standardisation, so that features are comparable between songs

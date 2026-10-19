@@ -90,7 +90,7 @@ df = get_full_dataframe(include_harmonix = False)
 train_df, test_df = train_test_split(df, test_size=0.2)
 
 # features extraction
-feature_dic = build_feature_dictionnary(train_df.to_dict("records"),sr=22050,dic = {},beat_track = 'other')
+feature_dic = build_feature_dictionnary(train_df.to_dict("records"),sr=22050,dic = {},beat_track = 'other',chords=False)
 
 #%%
 
@@ -106,47 +106,60 @@ print (np.sum(y_train)/len(y_train))
 # Labels for testing
 
 # features extraction
-feature_dic_test = build_feature_dictionnary(test_df.to_dict("records"),sr=22050,dic = {},beat_track = 'other')
+feature_dic_test = build_feature_dictionnary(test_df.to_dict("records"),sr=22050,dic = {},beat_track = 'other',chords=False)
 
 X_test, y_test = training_arrays(
     test_df.to_dict("records"),
     feature_dic_test,
     tolerance=0.1)
 
+#%%
 List_y_est = []
 
 #%%
 
-# Train
+# Train svm (way too long)
 model_svm = train_svm(X_train, y_train)
+
+y_test_est_svm = downbeat_probabilities(model_svm, X_test)
+List_y_est.append([y_test_est_svm, 'SVM'] )
+
 #%%
+
+# Train RandomForestClassifier
 
 model_forest = train_forest(X_train, y_train)
 
+y_test_est_forest = downbeat_probabilities(model_forest, X_test)
+List_y_est.append([y_test_est_forest, 'RandomForestClassifier'])
+
 #%%
+
+#Train HistGradientBoostingClassifier
 
 model_HistGradientBoostingClassifier = train_HistGradientBoostingClassifier(X_train, y_train)
 
-
-
-#%%
-
 y_test_est_HistGradientBoostingClassifier = downbeat_probabilities(model_HistGradientBoostingClassifier, X_test)
+List_y_est.append([y_test_est_HistGradientBoostingClassifier,'HistGradientBoostingClassifier'])
 
-List_y_est.append(y_test_est_HistGradientBoostingClassifier)
+
 #%%
-y_test_est_forest = downbeat_probabilities(model_forest, X_test)
-List_y_est.append(y_test_est_forest)
-#%%
-y_test_est_svm = downbeat_probabilities(model_svm, X_test)
-List_y_est.append(y_test_est_svm )
-#%%
+
+k = len(List_y_est)
 
 from sklearn.metrics import classification_report, confusion_matrix,average_precision_score
 
-for y_test_est in List_y_est :
+for i in range (k) :
+    
+    y_test_est = List_y_est[i][0]
+    
+    model_used = List_y_est[i][1]
 
-    # Conversion en labels binaires
+    ap = average_precision_score(y_test, y_test_est)
+    print("Average Precision of model trained with",model_used, " :", ap)
+    
+    
+    """
     y_pred = (y_test_est >= 0.1).astype(int)
 
 
@@ -163,9 +176,7 @@ for y_test_est in List_y_est :
 
     print("Confusion matrix:")
     print(confusion_matrix(y_test, y_pred))
-
-    ap = average_precision_score(y_test, y_test_est)
-    print("Average Precision :", ap)
+    """
 
 #%% Test down beat coverage
 

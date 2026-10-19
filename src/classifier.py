@@ -3,14 +3,15 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 def training_arrays(tracks, feature_dic, tolerance=0.07):
     """creates traing labels
     
     tarcks : annotaded tracks from the dataset
     dic : feature dictionnary
-&j
-    tuple (X, y) : X de forme (N, D) et y de forme (N,), 1=downbeat.
+
+    X shaoe (N, D) et y de forme (N,), 1=downbeat.
 
     """
     from features import label_beats
@@ -37,6 +38,37 @@ def train_svm(X, labels):
     Train a SVM
     """
     return make_pipeline(StandardScaler(), SVC(C=1, kernel='rbf', gamma='scale',class_weight='balanced', probability=True)).fit(X, labels)
+
+
+
+def train_forest(X, labels):
+    """
+    fit a forest classifier model
+    """
+    return RandomForestClassifier(n_estimators=200, min_samples_leaf=3,class_weight='balanced_subsample', n_jobs=-1).fit(X, labels)
+
+
+def train_HistGradientBoostingClassifier(X, labels):
+    model = HistGradientBoostingClassifier(
+    max_iter=200,
+    max_leaf_nodes=15,
+    learning_rate=0.05,
+    l2_regularization=1.0,
+    class_weight="balanced",
+    random_state=42
+    )
+    
+    return model.fit(X, labels)
+
+
+def downbeat_probabilities(model, X):
+    """
+    probability for each beat 
+    """
+    if len(X) == 0:
+        return np.empty(0)
+    
+    return np.clip(model.predict_proba(X)[:, 1], 1e-5, 1-1e-5)
 
 from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -68,14 +100,68 @@ X_train, y_train = training_arrays(
     feature_dic,
     tolerance=0.1)
 
-print (np.sum(y_train))
+print (np.sum(y_train)/len(y_train))
 
 #%%
 
 # Train
-model = train_svm(X_train, y_train)
+model_svm = train_svm(X_train, y_train)
+#%%
+
+model_forest = train_forest(X_train, y_train)
 
 #%%
+
+model_HistGradientBoostingClassifier = train_HistGradientBoostingClassifier(X_train, y_train)
+
+#%%
+# Labels for testing
+
+# features extraction
+feature_dic_test = build_feature_dictionnary(test_df.to_dict("records"),sr=22050,dic = {},beat_track = 'other')
+
+X_test, y_test = training_arrays(
+    test_df.to_dict("records"),
+    feature_dic_test,
+    tolerance=0.1)
+
+#%%
+
+y_test_est_HistGradientBoostingClassifier = downbeat_probabilities(model_HistGradientBoostingClassifier, X_test)
+
+
+#%%
+y_test_est_forest = downbeat_probabilities(model_forest, X_test)
+
+#%%
+y_test_est_forest = downbeat_probabilities(model_forest, X_test)
+
+#%%
+
+from sklearn.metrics import classification_report, confusion_matrix,average_precision_score
+
+# Conversion en labels binaires
+y_pred = (y_test_est >= 0.1).astype(int)
+
+
+
+ap = average_precision_score(y_test, y_test_est)
+print("Average Precision :", ap)
+
+print(classification_report(
+    y_test,
+    y_pred,
+    target_names=["Beat", "Downbeat"],
+    zero_division=0
+))
+
+print("Confusion matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+ap = average_precision_score(y_test, y_test_est)
+print("Average Precision :", ap)
+
+#%% Test down beat coverage
 
 import numpy as np
 
@@ -97,12 +183,12 @@ for r in train_df.to_dict("records"):
     n_ref += len(downbeats)
 
     for d in downbeats:
-        if np.min(np.abs(beats - d)) <= 0.07:
+        if np.min(np.abs(beats - d)) <= 0.11:
             n_matched += 1
 
-print("Downbeats annotés :", n_ref)
-print("Downbeats retrouvés :", n_matched)
-print("Taux de couverture :", n_matched / n_ref)
+print("Downbeats annotated :", n_ref)
+print("Downbeats found :", n_matched)
+print("coverage :", n_matched / n_ref)
 
 
 for tol in [0,0.03, 0.05, 0.07, 0.10, 0.15, 0.20]:

@@ -104,7 +104,7 @@ def dp_beat_estimation(y, Fs, hop=256, lam=10.0, tempo_factor=2):
     
 
 
-def extract_features_track(audio_path, sr=22050, hop=256, beat_track = 'librosa'):
+def extract_features_track(audio_path, sr=22050, hop=256, beat_track = 'librosa', compression = True):
     """Computes features of a song
 
 
@@ -167,8 +167,13 @@ def extract_features_track(audio_path, sr=22050, hop=256, beat_track = 'librosa'
     n = min(len(onset), len(rms), len(centroid), len(low), len(high), chroma.shape[1])
     
     #features compiled in each frames
-    frames = np.vstack([rms[:n], onset[:n], centroid[:n],
-                        low[:n], high[:n], chroma[:, :n]]).T
+    if not compression :
+        frames = np.vstack([rms[:n], onset[:n], centroid[:n],low[:n], high[:n], chroma[:, :n]]).T
+        
+    else:
+        frames = np.vstack([np.log(rms[:n]+1), np.log(onset[:n]+1), np.log(centroid[:n]+1),low[:n], np.log(high[:n]+1), chroma[:, :n]]).T
+        
+        
     #convert to frame times 
     frame_times = librosa.frames_to_time(np.arange(n), sr=sr, hop_length=hop)
 
@@ -205,7 +210,8 @@ def label_beats(beat_times, downbeat_times, tolerance=0.07):
     """
     
     if tolerance==0:
-        tolerance = np.mean(beat_times[1:]-beat_times[:-1])/5
+        tolerance = np.mean(beat_times[1:]-beat_times[:-1])/3
+        print(tolerance)
 
     labels = np.zeros(len(beat_times), dtype=int)
 
@@ -218,14 +224,14 @@ def label_beats(beat_times, downbeat_times, tolerance=0.07):
     return labels
 
 
-def build_feature_dictionnary(records, sr=22050,dic = {},beat_track = 'librosa'):
+def build_feature_dictionnary(records, sr=22050,dic = {},beat_track = 'librosa', compression = True):
     """
     compiles the features of songs in a dictionnary so that we only do it once
     """
     for r in records:
         key = (r['dataset'], r['track_id'])
 
-        dic[key] = extract_features_track(r['audio_path'], sr=sr,beat_track = beat_track )
+        dic[key] = extract_features_track(r['audio_path'], sr=sr,beat_track = beat_track, compression=compression )
 
     return dic
 

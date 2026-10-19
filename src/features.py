@@ -8,14 +8,14 @@ from pathlib import Path
 import sys
 import pandas as pd
 
-from scripts.get_data_frame import get_uncommon_dataframe,get_harmonix_dataframe
-from src.evaluate import eval_downbeats
+from get_data_frame import get_uncommon_dataframe,get_harmonix_dataframe
+from evaluate import eval_downbeats
 
 import pydub
 
 import csv, io, urllib.request, zipfile
 
-def dp_beats(delta , period , lam = 10.0):
+def dp_beats(delta , period , lam = 5.0):
     """
     dynamic programming estimation of beat positions as described in the course
     
@@ -77,21 +77,30 @@ def dp_beats(delta , period , lam = 10.0):
 
 
     
-def dp_beat_estimation ( y, Fs , hop=256 , lam = 100.0 ):
-        
-    delta = librosa.onset.onset_strength(y=y, sr=Fs, hop_length=hop)
-    
-    #initial estimate of the period (we multiply it by 2 because during testing the )
-    bpm = float(librosa.feature.tempo(onset_envelope=delta, sr=Fs, hop_length=hop)[0])*2
+def dp_beat_estimation(y, Fs, hop=256, lam=10.0, tempo_factor=2):
 
-    period = (Fs/hop) * 60/bpm
-    
-    beat_index = dp_beats(delta , period , lam = 100.0)
-    
-    #For this approximation we will take the amplitude of the beats in order to estimate the down beats (+- 2 frames)
-    amp_beats = np.array([ delta[max(0, b - 2): min(b + 3 , len(delta))].max() for b in beat_index])
-    
-    return(beat_index*hop/Fs, amp_beats)
+    delta = librosa.onset.onset_strength(
+        y=y, sr=Fs, hop_length=hop
+    )
+
+    bpm = float(librosa.feature.tempo(
+        onset_envelope=delta,
+        sr=Fs,
+        hop_length=hop
+    )[0])
+
+    bpm *= tempo_factor
+
+    period = (Fs / hop) * 60 / bpm
+
+    beat_index = dp_beats(delta, period, lam=lam)
+
+    amp_beats = np.array([
+        delta[max(0, b-5):min(b+6, len(delta))].max()
+        for b in beat_index
+    ])
+
+    return beat_index * hop / Fs, amp_beats
     
 
 
@@ -158,8 +167,8 @@ def extract_features_track(audio_path, sr=22050, hop=256, beat_track = 'librosa'
     n = min(len(onset), len(rms), len(centroid), len(low), len(high), chroma.shape[1])
     
     #features compiled in each frames
-    frames = np.vstack([np.log1p(rms[:n]), np.log1p(onset[:n]), centroid[:n],
-                        np.log1p(low[:n]), np.log1p(high[:n]), chroma[:, :n]]).T
+    frames = np.vstack([rms[:n], onset[:n], centroid[:n],
+                        low[:n], high[:n], chroma[:, :n]]).T
     #convert to frame times 
     frame_times = librosa.frames_to_time(np.arange(n), sr=sr, hop_length=hop)
 
@@ -182,39 +191,42 @@ def extract_features_track(audio_path, sr=22050, hop=256, beat_track = 'librosa'
     return dict(beat_times=beats, X=np.nan_to_num(X).astype('float32'))
 
 
+
+
 def label_beats(beat_times, downbeat_times, tolerance=0.07):
+    
     """
     Associate downbeats to closest beats with a tolerance 70ms
+    used for labelling training data
+    
+    beat_times are the positions of the beats estimated with : librosa.beat.beat_track or dp_beats
+    
+    downbeat_times are the down beats from the dataset
     """
-    beat_times = np.asarray(beat_times)
     
-    labels = np.zeros(len(beat_times))
-    
-    
-    for t in downbeat_times:
-        
-        if not len(beat_times):
-            break
-        
-        for i in np.argsort(np.abs(beat_times - t)):
-            
-            if abs(beat_times[i] - t) > tolerance:
-                break
-            
+    if tolerance==0:
+        tolerance = np.mean(beat_times[1:]-beat_times[:-1])/5
+
+    labels = np.zeros(len(beat_times), dtype=int)
+
+    for d in downbeat_times:
+        i = np.argmin(np.abs(beat_times - d))
+
+        if abs(beat_times[i] - d) <= tolerance:
             labels[i] = 1
-            break
-        
+
     return labels
 
 
-def build_cache(records, sr=22050,dic = {}):
+def build_feature_dictionnary(records, sr=22050,dic = {},beat_track = 'librosa'):
     """
     compiles the features of songs in a dictionnary so that we only do it once
     """
     for r in records:
         key = (r['dataset'], r['track_id'])
-        try:
-            dic[key] = extract_features_track(r['audio_path'], sr=sr)
-        except Exception as exc:
-            print('Skipping', key, ':', exc)
+
+        dic[key] = extract_features_track(r['audio_path'], sr=sr,beat_track = beat_track )
+
     return dic
+
+

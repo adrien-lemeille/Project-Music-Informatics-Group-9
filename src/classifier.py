@@ -84,7 +84,7 @@ import pandas as pd
 #%%
 
 # Load annotated dataset
-df = get_full_dataframe(include_harmonix = True)
+df = get_full_dataframe(include_harmonix = False)
 
 # Test train split
 train_df, test_df = train_test_split(df, test_size=0.2)
@@ -103,6 +103,19 @@ X_train, y_train = training_arrays(
 print (np.sum(y_train)/len(y_train))
 
 #%%
+# Labels for testing
+
+# features extraction
+feature_dic_test = build_feature_dictionnary(test_df.to_dict("records"),sr=22050,dic = {},beat_track = 'other')
+
+X_test, y_test = training_arrays(
+    test_df.to_dict("records"),
+    feature_dic_test,
+    tolerance=0.1)
+
+List_y_est = []
+
+#%%
 
 # Train
 model_svm = train_svm(X_train, y_train)
@@ -114,52 +127,45 @@ model_forest = train_forest(X_train, y_train)
 
 model_HistGradientBoostingClassifier = train_HistGradientBoostingClassifier(X_train, y_train)
 
-#%%
-# Labels for testing
 
-# features extraction
-feature_dic_test = build_feature_dictionnary(test_df.to_dict("records"),sr=22050,dic = {},beat_track = 'other')
-
-X_test, y_test = training_arrays(
-    test_df.to_dict("records"),
-    feature_dic_test,
-    tolerance=0.1)
 
 #%%
 
 y_test_est_HistGradientBoostingClassifier = downbeat_probabilities(model_HistGradientBoostingClassifier, X_test)
 
-
+List_y_est.append(y_test_est_HistGradientBoostingClassifier)
 #%%
 y_test_est_forest = downbeat_probabilities(model_forest, X_test)
-
+List_y_est.append(y_test_est_forest)
 #%%
-y_test_est_forest = downbeat_probabilities(model_forest, X_test)
-
+y_test_est_svm = downbeat_probabilities(model_svm, X_test)
+List_y_est.append(y_test_est_svm )
 #%%
 
 from sklearn.metrics import classification_report, confusion_matrix,average_precision_score
 
-# Conversion en labels binaires
-y_pred = (y_test_est >= 0.1).astype(int)
+for y_test_est in List_y_est :
+
+    # Conversion en labels binaires
+    y_pred = (y_test_est >= 0.1).astype(int)
 
 
 
-ap = average_precision_score(y_test, y_test_est)
-print("Average Precision :", ap)
+    ap = average_precision_score(y_test, y_test_est)
+    print("Average Precision :", ap)
 
-print(classification_report(
+    print(classification_report(
     y_test,
     y_pred,
     target_names=["Beat", "Downbeat"],
     zero_division=0
-))
+    ))
 
-print("Confusion matrix:")
-print(confusion_matrix(y_test, y_pred))
+    print("Confusion matrix:")
+    print(confusion_matrix(y_test, y_pred))
 
-ap = average_precision_score(y_test, y_test_est)
-print("Average Precision :", ap)
+    ap = average_precision_score(y_test, y_test_est)
+    print("Average Precision :", ap)
 
 #%% Test down beat coverage
 

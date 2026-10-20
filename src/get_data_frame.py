@@ -95,15 +95,30 @@ def get_harmonix_dataframe(root=HARMONIX):
     return pd.DataFrame(rows)
 
 
-def get_full_dataframe(root_u=UNCOMMON,root_h=HARMONIX, include_harmonix = False):
-    
-    df = get_uncommon_dataframe(root_u)
-    
+def get_full_dataframe(root_u=UNCOMMON, root_h=HARMONIX,
+                       include_harmonix=False, include_uncommon=True):
+
+    dfs = []
+
+    if include_uncommon:
+        du = get_uncommon_dataframe(root_u)
+        dfs.append(du)
+
     if include_harmonix:
         dh = get_harmonix_dataframe(root=root_h)
-    
-        df = pd.concat([df, dh], ignore_index=True, sort=False)
-    
+        dfs.append(dh)
+
+    if not dfs:
+        raise ValueError("At least one dataset must be selected.")
+
+    df = pd.concat(dfs, ignore_index=True, sort=False)
+
+    # Keep only tracks with existing audio files
+    mask = df["audio_path"].apply(
+        lambda p: Path(p).is_file() if pd.notna(p) else False
+    )
+
+
     return df[df.apply(lambda r: Path(r['audio_path']).is_file() , axis=1)].reset_index(drop=True) #We only keep the annotations that have audio files
 
 

@@ -17,11 +17,11 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent.parent   # <-- your project folder (contains src/, data/, ...)
  
 DOWNLOAD_ANNOTATIONS     = True    # small files: beat/downbeat annotations of both datasets
-DOWNLOAD_UNCOMMON_AUDIO  = True    # YouTube audio of the uncommon-meter dataset (114 tracks)
+DOWNLOAD_UNCOMMON_AUDIO  = False    # YouTube audio of the uncommon-meter dataset (114 tracks)
 DOWNLOAD_HARMONIX_AUDIO  = True   # YouTube audio of Harmonix (large, mostly 4/4 -> optional control set)
  
-LIMIT_unco = 5
-LIMIT_harmo = 5            # only download the first N tracks of each audio set; 0 = download everything
+LIMIT_unco = 0
+LIMIT_harmo = 30          # only download the first N tracks of each audio set; 0 = download everything
 
 MIN_ALIGNMENT = 0.95 # Harmonix only: skip tracks whose YouTube audio is poorly aligned with the annotations
 # ===================================================================================
@@ -60,18 +60,23 @@ def download_audio(jobs, out_dir):
         if (out_dir / f"{name}.wav").exists():            # already downloaded -> skip
             continue
         opts = {
-            "format": "bestaudio/best",
-            "outtmpl": str(out_dir / f"{name}.%(ext)s"),
-            "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "wav"}],
-            "postprocessor_args": {"extractaudio": ["-ar", "22050", "-ac", "1"]},
-            "quiet": True, "noprogress": True,
-        }
+    "format": "bestaudio/best",
+    "outtmpl": str(out_dir / f"{name}.%(ext)s"),
+    "postprocessors": [
+        {"key": "FFmpegExtractAudio", "preferredcodec": "wav"}
+    ],
+    "postprocessor_args": {
+        "extractaudio": ["-ar", "22050", "-ac", "1"]
+    },
+    "quiet": False,
+    "noprogress": True,
+}
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
                 ydl.download([url])
             print(f"[{i}/{len(jobs)}] OK     {name}")
-        except Exception as e:                            # video removed, blocked, ...
-            print(f"[{i}/{len(jobs)}] FAILED {name}: {str(e)[:80]}")
+        except Exception as e:
+            print(f"[{i}/{len(jobs)}] FAILED {name}: {e}")
             with open(out_dir.parent / "failed.txt", "a", encoding="utf-8") as f:
                 f.write(f"{name}\t{url}\n")
  

@@ -5,6 +5,57 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 
+from pathlib import Path
+PROJECT_DIR = Path(__file__).resolve().parent
+from sklearn.model_selection import train_test_split
+
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import average_precision_score
+
+from get_data_frame import get_full_dataframe
+from features import build_feature_dictionnary
+
+
+
+def filter_harmonix_recall(df, feature_dic, threshold=0.90, tol=0.1):
+
+    keep = []
+
+    for _, r in df.iterrows():
+
+        if r["dataset"] != "harmonix":
+            keep.append(True)
+            continue
+
+        item = feature_dic.get((r["dataset"], r["track_id"]))
+
+        if item is None:
+            keep.append(False)
+            continue
+
+        beats = np.asarray(item["beat_times"])
+        downbeats = np.asarray(r["downbeat_times"])
+
+        if len(beats) == 0 or len(downbeats) == 0:
+            keep.append(False)
+            continue
+
+        recall = np.mean([
+            np.min(np.abs(beats - d)) <= tol
+            for d in downbeats
+        ])
+
+        keep.append(recall >= threshold)
+
+    print(f"Harmonix tracks removed: {len(df) - sum(keep)}")
+
+    return df.loc[keep].reset_index(drop=True)
+
+
+
+
 def training_arrays(tracks, feature_dic, tolerance=0.07):
     """creates traing labels
     
@@ -70,116 +121,169 @@ def downbeat_probabilities(model, X):
     
     return np.clip(model.predict_proba(X)[:, 1], 1e-5, 1-1e-5)
 
-from pathlib import Path
-PROJECT_DIR = Path(__file__).resolve().parent
-from sklearn.model_selection import train_test_split
-
-
-
-
-from get_data_frame import get_full_dataframe
-from features import build_feature_dictionnary
-import pandas as pd
 
 #%%
+SEED = 42
+TOLERANCE = 0.10
 
-# Load annotated dataset
-df = get_full_dataframe(include_harmonix = False)
+INCLUDE_HARMONIX_TRAIN = False
+EVALUATE_HARMONIX = False
 
-# Test train split
-train_df, test_df = train_test_split(df, test_size=0.2)
+N_HARMONIX_TRAIN = 20  # Number of Harmonix tracks to put in the training
 
-# features extraction
-feature_dic = build_feature_dictionnary(train_df.to_dict("records"),sr=22050,dic = {},beat_track = 'other',chords=False)
 
-#%%
+#%% Load datasets
 
-# Labels for training
+df = get_full_dataframe(
+    include_harmonix=True,
+    include_uncommon=True
+)
+
+uncommon_df = df[df["dataset"] == "uncommon_meter"].copy()
+harmonix_df = df[df["dataset"] == "harmonix"].copy()
+
+
+#%% Train / test split
+
+# Uncommon: 80% train, 20% test
+train_df, test_df = train_test_split(
+    uncommon_df,
+    test_size=0.20,
+    random_state=SEED
+)
+
+# Harmonix: independent training and test subsets
+harmonix_train = harmonix_df.sample(
+    n=min(N_HARMONIX_TRAIN, len(harmonix_df)),
+    random_state=SEED
+)
+
+harmonix_test = harmonix_df.drop(harmonix_train.index)
+
+if INCLUDE_HARMONIX_TRAIN:
+    train_df = pd.concat(
+        [train_df, harmonix_train],
+        ignore_index=True
+    )
+
+train_df = train_df.reset_index(drop=True)
+test_df = test_df.reset_index(drop=True)
+harmonix_test = harmonix_test.reset_index(drop=True)
+
+print(f"Train: {len(train_df)} tracks")
+print(f"Test Uncommon: {len(test_df)} tracks")
+print(f"Test Harmonix: {len(harmonix_test)} tracks")
+
+
+#%% Feature extraction
+
+feature_dic_train = build_feature_dictionnary(
+    train_df.to_dict("records"),
+    sr=22050,
+    dic={},
+    beat_track="other",
+    chords=False
+)
+
+feature_dic_test = build_feature_dictionnary(
+    test_df.to_dict("records"),
+    sr=22050,
+    dic={},
+    beat_track="other",
+    chords=False
+)
+
+if EVALUATE_HARMONIX:
+    feature_dic_harmonix = build_feature_dictionnary(
+        harmonix_test.to_dict("records"),
+        sr=22050,
+        dic={},
+        beat_track="other",
+        chords=False
+    )
+
+
+#%% Training and testing arrays
+
 X_train, y_train = training_arrays(
     train_df.to_dict("records"),
-    feature_dic,
-    tolerance=0.1)
-
-print (np.sum(y_train)/len(y_train))
-
-#%%
-# Labels for testing
-
-# features extraction
-feature_dic_test = build_feature_dictionnary(test_df.to_dict("records"),sr=22050,dic = {},beat_track = 'other',chords=False)
+    feature_dic_train,
+    tolerance=TOLERANCE
+)
 
 X_test, y_test = training_arrays(
     test_df.to_dict("records"),
     feature_dic_test,
-    tolerance=0.1)
+    tolerance=TOLERANCE
+)
 
-#%%
-List_y_est = []
-
-#%%
-
-# Train svm (way too long)
-model_svm = train_svm(X_train, y_train)
-
-y_test_est_svm = downbeat_probabilities(model_svm, X_test)
-List_y_est.append([y_test_est_svm, 'SVM'] )
-
-#%%
-
-# Train RandomForestClassifier
-
-model_forest = train_forest(X_train, y_train)
-
-y_test_est_forest = downbeat_probabilities(model_forest, X_test)
-List_y_est.append([y_test_est_forest, 'RandomForestClassifier'])
-
-#%%
-
-#Train HistGradientBoostingClassifier
-
-model_HistGradientBoostingClassifier = train_HistGradientBoostingClassifier(X_train, y_train)
-
-y_test_est_HistGradientBoostingClassifier = downbeat_probabilities(model_HistGradientBoostingClassifier, X_test)
-List_y_est.append([y_test_est_HistGradientBoostingClassifier,'HistGradientBoostingClassifier'])
+if EVALUATE_HARMONIX:
+    X_harmonix, y_harmonix = training_arrays(
+        harmonix_test.to_dict("records"),
+        feature_dic_harmonix,
+        tolerance=TOLERANCE
+    )
 
 
-#%%
+#%% Train classifiers
 
-k = len(List_y_est)
+#IT IS POSSIBLE TO ADD SVM TO BUT IT TAKES TOO LONG FOR MY PC
 
-from sklearn.metrics import classification_report, confusion_matrix,average_precision_score
+models = {
+    "Random Forest": train_forest(X_train, y_train),
+    "HistGradientBoosting": train_HistGradientBoostingClassifier( X_train, y_train)
+}
 
-for i in range (k) :
+
+#%% Evaluation
+
+results = []
+
+for name, model in models.items():
+
+    # Uncommon
+    probabilities = downbeat_probabilities(model, X_test)
+    ap_uncommon = average_precision_score(y_test, probabilities)
+
+    result = {
+        "Model": name,
+        "AP Uncommon": ap_uncommon
+    }
+
+    # Harmonix
+    if EVALUATE_HARMONIX:
+        probabilities_h = downbeat_probabilities(model, X_harmonix)
+        ap_harmonix = average_precision_score(
+            y_harmonix, probabilities_h
+        )
+        result["AP Harmonix"] = ap_harmonix
+
+    results.append(result)
+
+results_df = pd.DataFrame(results)
+
+print("\nFinal test results:")
+print(results_df.to_string(index=False))
+
+print(f"\nUncommon positive ratio: {np.mean(y_test):.3f}")
+
+if EVALUATE_HARMONIX:
+    print(f"Harmonix positive ratio: {np.mean(y_harmonix):.3f}")
     
-    y_test_est = List_y_est[i][0]
-    
-    model_used = List_y_est[i][1]
-
-    ap = average_precision_score(y_test, y_test_est)
-    print("Average Precision of model trained with",model_used, " :", ap)
     
     
-    """
-    y_pred = (y_test_est >= 0.1).astype(int)
+    
+    
+    
+    
+    
+    
+    
+    
 
-
-
-    ap = average_precision_score(y_test, y_test_est)
-    print("Average Precision :", ap)
-
-    print(classification_report(
-    y_test,
-    y_pred,
-    target_names=["Beat", "Downbeat"],
-    zero_division=0
-    ))
-
-    print("Confusion matrix:")
-    print(confusion_matrix(y_test, y_pred))
-    """
-
-#%% Test down beat coverage
-
+#%% Test down beat coverage, recall in the beat estimation
+#This part of the programm isn't useful for the execution
+"""
 import numpy as np
 
 n_ref = 0
@@ -232,3 +336,5 @@ for tol in [0,0.03, 0.05, 0.07, 0.10, 0.15, 0.20]:
                 n_matched += 1
 
     print(f"{tol:.2f} s : {100*n_matched/n_ref:.1f} %")
+    
+    """

@@ -177,9 +177,9 @@ file_id = track_id+".wav"
 
 
 
-t_begin = 0
+t_begin = 30
 
-t_end = 200
+t_end = 40
 
 df_uncommon = get_uncommon_dataframe()
 df_harmonix = get_harmonix_dataframe()
@@ -255,14 +255,15 @@ print(db_truncated)
 T = np.arange(len(track_array)) / Fs
 
 
-
-plt.subplot(2, 1, 1)
+#%%
+plt.subplot(2, 1, 2)
 plt.title("Track : "+track_id)
 plt.xlabel("Time (s)")
 plt.ylabel("Amplitude")
 plt.plot(T, track_array)
-plt.vlines(onset_times, ymin=-1, ymax=1, colors='red')
+#plt.vlines(onset_times, ymin=-1, ymax=1, colors='red')
 plt.grid()
+plt.show()
 
 plt.subplot(2, 1, 2)
 plt.xlabel("Time (s)")
@@ -277,12 +278,14 @@ plt.show()
 dp_downbeats_est, best_k, best_p, best_score = dp_downbeat_estimation ( y=track_array, Fs=Fs , lam = 10, candidtes = [3,4,5,6,8,9,11,13] )
 print(dp_downbeats_est, best_k, best_p, best_score)
 
+b,a = dp_beat_estimation ( track_array, Fs , hop=256 , lam = 100.0 )
+
 plt.title("comparaison of downbeats and estimates (dynamic programming)")
 plt.xlabel("Time (s)")
 plt.ylabel("Amplitude")
-plt.plot(T_novelty,novelety)
-plt.vlines(dp_downbeats_est , ymin=0, ymax=5, colors='red')
-plt.vlines(db_truncated, ymin=0, ymax=5, colors='orange')
+plt.plot(T, track_array)
+#plt.vlines(b, ymin=-1, ymax=1, colors='red', alpha = 0.6)
+plt.vlines(db_truncated, ymin=-1, ymax=1, colors='orange')
 plt.grid()
 plt.show()
 

@@ -4,8 +4,13 @@ from pathlib import Path
 
 import numpy as np
 
-from hmm import BEAT_COUNTS, STATES, SIGNATURE_BEAT_COUNTS
-from hmm import get_beat_family, build_transition_matrix
+from .hmm import (
+    BEAT_COUNTS,
+    STATES,
+    SIGNATURE_BEAT_COUNTS,
+    get_beat_family,
+    build_transition_matrix
+)
 
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
@@ -251,6 +256,58 @@ def run_training(annotation_dir=ANNOTATION_DIR, output_path=OUTPUT_PATH, test_fr
     print("Etats :", len(STATES))
     print("Modele enregistre :", output_path)
     return model
+
+
+
+
+
+
+
+def train_hmm_from_ids(train_ids, annotation_dir=ANNOTATION_DIR,
+                       smoothing=1.0, a=0, p_stay=0.9):
+
+    # Load annotations
+    all_tracks = load_tracks(annotation_dir)
+
+    # Select only the tracks belonging to the training set
+    train_ids = {str(track_id) for track_id in train_ids}
+
+    train_tracks = [
+        track for track in all_tracks
+        if str(track["track_id"]) in train_ids
+    ]
+
+    found_ids = {str(track["track_id"]) for track in train_tracks}
+    missing_ids = train_ids - found_ids
+
+    if missing_ids:
+        raise ValueError(
+            f"Missing HMM annotations for {len(missing_ids)} tracks: "
+            f"{sorted(missing_ids)}"
+        )
+
+    if not train_tracks:
+        raise ValueError("No training tracks found for HMM.")
+
+    # Count transitions using training annotations only
+    counts = count_annotations(train_tracks)
+
+    transition_probs, _, _, _ = estimate_transition_probs(
+        counts["transition_counts"],
+        smoothing=smoothing
+    )
+
+    # Estimate HMM parameters
+    A = build_transition_matrix(transition_probs, add_uniform=a, p_stay=p_stay)
+
+    pi = estimate_initial_probs(
+        counts["first_measure_counts"],
+        smoothing=smoothing
+    )
+
+    return A, pi
+
+
 
 
 if __name__ == "__main__":

@@ -5,7 +5,6 @@ from pathlib import Path
 
 SIGNATURE_BEAT_COUNTS = {
     "2/4": 2,
-    "2/8": 2,
     "3/4": 3,
     "3/8": 3,
     "4/4": 4,
@@ -21,6 +20,9 @@ SIGNATURE_BEAT_COUNTS = {
     "9/4": 9,
     "9/8": 9,
     "13/16": 13,
+    "14/8": 14,
+    "10/8": 10,
+    "12/8": 12,
 }
 
 BEAT_COUNTS = []
@@ -48,7 +50,9 @@ def get_beat_family(beat_count):
     return family
 
 
-def build_transition_matrix(beat_transition_probs):
+
+
+def build_transition_matrix(beat_transition_probs, add_uniform = 0, p_stay=0.9):
     transition_matrix = np.zeros((len(STATES), len(STATES)))
 
     for state_index in range(len(STATES)):
@@ -61,6 +65,28 @@ def build_transition_matrix(beat_transition_probs):
             for destination in range(len(BEAT_COUNTS)):
                 next_state = DOWNBEAT_STATES[destination]
                 transition_matrix[state_index, next_state] = beat_transition_probs[source, destination]
+                
+    if add_uniform != 0:
+        transition_uniform = np.zeros((len(STATES), len(STATES)))
+            
+        for state_index in range(len(STATES)):
+            beat_count, position = STATES[state_index]
+
+            if position < beat_count:
+                transition_uniform[state_index, state_index + 1] = 1
+           
+            else:
+                for j, next_state in enumerate(DOWNBEAT_STATES):
+
+                    next_beat_count = BEAT_COUNTS[j]
+
+                    if next_beat_count == beat_count:
+                        transition_uniform[state_index, next_state] = p_stay
+                    else:
+                        transition_uniform[state_index, next_state] = ((1 - p_stay) / (len(BEAT_COUNTS) - 1))
+                        
+        transition_matrix = transition_matrix*(1-add_uniform) + transition_uniform * add_uniform 
+            
 
     return transition_matrix
 
@@ -74,22 +100,28 @@ def load_model(model_path=MODEL_PATH):
     return transition_matrix, initial_probs
 
 
-def build_observation_scores(downbeat_probs):
-    n_beats = len(downbeat_probs)
-    n_states = len(STATES)
-    observation_scores = np.zeros((n_beats, n_states))
+def build_observation_scores(downbeat_probs, prior=0.11365144260942851):
 
-    for beat_index in range(n_beats):
-        p = downbeat_probs[beat_index]
+    p = np.clip(
+        np.asarray(downbeat_probs, dtype=float),
+        1e-6,
+        1 - 1e-6
+    )
 
-        for state_index in range(n_states):
-            if state_index in DOWNBEAT_STATES:
-                observation_scores[beat_index, state_index] = p
-            else:
-                observation_scores[beat_index, state_index] = 1 - p
+    # Correct the class prior
+    odds = p / (1 - p)
+    prior_odds = prior / (1 - prior)
 
-    return observation_scores
+    corrected_odds = odds / prior_odds
+    corrected_p = corrected_odds / (1 + corrected_odds)
 
+    # Build observation scores
+    scores = np.empty((len(p), len(STATES)))
+
+    scores[:] = ((1 - p) / (1 - prior))[:, None]
+    scores[:, DOWNBEAT_STATES] = (p / prior)[:, None]
+
+    return scores
 
 def initialize_viterbi(observation_scores, initial_probs):
     n_beats = len(observation_scores)

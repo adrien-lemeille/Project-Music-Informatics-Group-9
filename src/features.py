@@ -2,29 +2,10 @@
 import numpy as np
 import librosa
 
-from pathlib import Path
-import sys
-import pandas as pd
-
-from get_data_frame import get_uncommon_dataframe, get_harmonix_dataframe
-from evaluate import eval_downbeats
-
-import pydub
-
-import csv, io, urllib.request, zipfile
+BASE_NAMES = ['rms', 'onset', 'log_bass', 'bass_flux', 'chroma_nov1']
 
 
 def dp_beats(delta, period, lam=5.0):
-    """
-    dynamic programming estimation of beat positions as described in the course
-
-    delta    : novelety function delta
-    period : estimated perio between 
-    lam    : weight
-
-    6.3.2 Beat Tracking by Dynamic Programming
-    """
-
     N = len(delta)
 
     delta = delta / (delta.std() + 1e-12)
@@ -98,160 +79,109 @@ def dp_beat_estimation(y, Fs, hop=256, lam=10.0, tempo_factor=2):
     return beat_index * hop / Fs, amp_beats
 
 
-_CHORD_PROC = None
+
+def feature_names():
+    return (list(BASE_NAMES) + [f'dprev:{n}' for n in BASE_NAMES] + [f'dnext:{n}' for n in BASE_NAMES]  + [f'zloc:{n}' for n in BASE_NAMES])
 
 
-def _get_chord_processors():
-    """madmom processors are heavy to build, so we create them once (lazy import)."""
-    global _CHORD_PROC
-    if _CHORD_PROC is None:
-        from madmom.features.chords import CNNChordFeatureProcessor, CRFChordRecognitionProcessor
-        _CHORD_PROC = (CNNChordFeatureProcessor(), CRFChordRecognitionProcessor())
-    return _CHORD_PROC
+def _shift(A, k):
+    return A[np.clip(np.arange(len(A)) + k, 0, len(A) - 1)]
 
 
-def chord_change_feature(chords, beats, tol_ratio=0.3):
-    """
-    Chord changes (paper 3.1) at the beat level: 1 if a chord change falls on the beat, else 0.
-    Each change instant is attached to its closest beat, if it is within
-    tol_ratio * (median beat interval), otherwise ignored.
+def _interp(sig, beats, fps):
+    return np.interp(beats, np.arange(len(sig)) / fps, sig)
 
-    chords : madmom structured array (start, end, label)
-    beats  : beat times in seconds
-    """
-    out = np.zeros(len(beats))
-    if len(chords) < 2 or len(beats) < 2:
-        return out
 
-    starts, labels = chords['start'], chords['label']
-    tol = tol_ratio * np.median(np.diff(beats))
-
-    for i in range(1, len(chords)):
-        if labels[i] != labels[i - 1]:
-            k = np.argmin(np.abs(beats - starts[i]))
-            if abs(beats[k] - starts[i]) <= tol:
-                out[k] = 1.0
+def _sample_max(sig, beats, fps, L):
+    n = len(sig)
+    out = np.empty(len(beats))
+    for k, b in enumerate(beats):
+        i0 = min(max(int(np.floor((b - L) * fps)), 0), n - 1)
+        i1 = max(min(int(np.ceil((b + L) * fps)) + 1, n), i0 + 1)
+        out[k] = sig[i0:i1].max()
     return out
 
 
-def harmonic_balance_beats(Stft, frequencies, beats, sr, hop):
-    """
-    Harmonic balance (paper 3.2) at the beat level.
-    Bass band [0-150Hz] and snare band [1400-7500Hz] : energy summed over the band,
-    then max over a window of +/- L around each beat (L = 1/10 of the beat interval).
-    """
-    bass = (Stft[(frequencies >= 0) & (frequencies <= 150)] ** 2).sum(axis=0)
-    snare = (Stft[(frequencies >= 1400) & (frequencies <= 7500)] ** 2).sum(axis=0)
+def _beat_sync(F, beats, fps):
+    n_fr = F.shape[1]
+    idx = np.clip(np.round(beats * fps).astype(int), 0, n_fr - 1)
+    step = max(1, int(np.median(np.diff(idx)))) if len(idx) > 1 else 1
+    edges = np.append(idx, min(n_fr, idx[-1] + step))
+    return np.array([F[:, a:max(b, a + 1)].mean(axis=1) for a, b in zip(edges[:-1], edges[1:])])
 
+
+def chroma_novelty(chroma_b):
+    c = chroma_b / (np.linalg.norm(chroma_b, axis=1, keepdims=True) + 1e-8)
+    out = np.zeros(len(c))
+    out[1:] = 1 - (c[1:] * c[:-1]).sum(axis=1)
+    return out
+
+
+def _band_mask(frequencies, lo, hi):
+    return (frequencies >= lo) & (frequencies <= hi)
+
+
+def bass_energy_beats(Stft, frequencies, beats, sr, hop, lo=0, hi=150):
+    bass = (Stft[_band_mask(frequencies, lo, hi)] ** 2).sum(axis=0)
     ibi = np.median(np.diff(beats)) if len(beats) > 1 else 0.5
-    L = 0.1 * ibi
-    fps = sr / hop
-    n_fr = len(bass)
-
-    e = np.zeros((len(beats), 2))
-    for k, b in enumerate(beats):
-        i0 = min(max(int(np.floor((b - L) * fps)), 0), n_fr - 1)
-        i1 = max(min(int(np.ceil((b + L) * fps)) + 1, n_fr), i0 + 1)
-        e[k] = bass[i0:i1].max(), snare[i0:i1].max()
-
+    e = _sample_max(bass, beats, sr / hop, 0.1 * ibi)
     eps = 1e-10
-    rel = (e + eps) / (np.median(e, axis=0) + eps)
-    hb = rel[:, 0] / (rel[:, 0] + rel[:, 1])
-    return np.column_stack([np.log(rel), hb])
+    return np.log((e + eps) / (np.median(e) + eps))
 
 
-def extract_features_track(audio_path, sr=22050, hop=256, beat_track='librosa', chords=True, normalize=True, compression =True):
-    """Computes features of a song
+def bass_flux(Stft, frequencies, lo=0, hi=150):
+    band = np.log1p(Stft[_band_mask(frequencies, lo, hi)])
+    d = np.diff(band, axis=1, prepend=band[:, :1])
+    return np.maximum(d, 0).sum(axis=0)
 
 
-    audio_path : path WAV 
-    sr : fréquence cible en Hz 
-    hop : for STFT
-    beat_track : type of dp beat tracking (homemade or librosa)
-    chords : add the chord change feature (needs madmom)
-    normalize : z-score of the frame features on the track
-
-
-    dict : beat_times (T,)
-    X (T, D), matrix of features (T number of estimated beats)
-
-    """
-
+def extract_features_track(audio_path, sr=22050, hop=256, beat_track='librosa', normalize=True, compression=True, win=4):
+    names = feature_names()
     y, sr = librosa.load(str(audio_path), sr=sr, mono=True)
-    # type of beat tracking either librosa or our own
 
     if beat_track == 'librosa':
         _, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop, trim=False, units='time')
-
     else:
         beats, _ = dp_beat_estimation(y, Fs=sr, hop=hop, lam=10.0)
-
     beats = np.asarray(beats, dtype=float)
 
-    if len(beats) == 0:
-        return dict(beat_times=beats, X=np.empty((0, 0)))
+    if len(beats) < 2:
+        return dict(beat_times=beats, X=np.empty((0, len(names)), dtype='float32'), names=names)
 
-    # STFT
+    fps = sr / hop
     Stft = np.abs(librosa.stft(y, hop_length=hop))
     frequencies = librosa.fft_frequencies(sr=sr)
+    L = 0.1 * np.median(np.diff(beats))
 
-    # onset strength (for rythmique accent)
-    onset = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop)
 
-    # local energy
+    mel_db = librosa.power_to_db(librosa.feature.melspectrogram(S=Stft ** 2, sr=sr))
+    onset = librosa.onset.onset_strength(S=mel_db, sr=sr, hop_length=hop)
     rms = librosa.feature.rms(S=Stft)[0]
+    chroma = librosa.feature.chroma_stft(S=Stft ** 2, sr=sr)
+    flux = bass_flux(Stft, frequencies)
 
-    # spectral centroids
-    centroid = librosa.feature.spectral_centroid(S=Stft, sr=sr)[0] / sr
+    squash = np.log1p if compression else (lambda v: v)
 
-    # chroma features (not as good as chord changes bu can still be usefull)
-    chroma = librosa.feature.chroma_stft(S=Stft, sr=sr)
 
-    # somentimes not exactly the same length not sure why
-    n = min(len(onset), len(rms), len(centroid), chroma.shape[1])
+    rms_b = _interp(squash(rms), beats, fps)
+    onset_b = squash(_sample_max(onset, beats, fps, L))
+    log_bass_b = bass_energy_beats(Stft, frequencies, beats, sr, hop)
+    bass_flux_b = squash(_sample_max(flux, beats, fps, L))
+    chroma_b = _beat_sync(chroma, beats, fps)
 
-    # features compiled in each frames
-    if compression:
-        frames = np.vstack([np.log1p(rms[:n]), np.log1p(onset[:n]), np.log1p(centroid[:n]), chroma[:, :n]]).T
+    S = np.column_stack([rms_b, onset_b, log_bass_b, bass_flux_b, chroma_novelty(chroma_b)])
 
-    else:
-        frames = np.vstack([rms[:n], onset[:n], centroid[:n], chroma[:, :n]]).T
-    
-    
-    frames = np.vstack([rms[:n], onset[:n], centroid[:n], chroma[:, :n]]).T
-
-    # per track standardisation, so that features are comparable between songs
     if normalize:
-        frames = (frames - frames.mean(axis=0)) / (frames.std(axis=0) + 1e-8)
+        S = (S - S.mean(axis=0)) / (S.std(axis=0) + 1e-8)
 
-    # convert to frame times
-    frame_times = librosa.frames_to_time(np.arange(n), sr=sr, hop_length=hop)
+    diff_prev = S - _shift(S, -1)
+    diff_nxt = _shift(S, 1) - S
 
-    # Interpolation, the beats will fall between 2 frames
-    sampled = np.column_stack([np.interp(beats, frame_times, frames[:, j]) for j in range(frames.shape[1])])
+    stack = np.stack([_shift(S, k) for k in range(-win, win + 1)])
+    zloc = (S - stack.mean(axis=0)) / (stack.std(axis=0) + 1e-8)
 
-    # features computed directly at the beat level (harmonic balance, chord changes)
-    beat_level = [harmonic_balance_beats(Stft, frequencies, beats, sr, hop)]
-    if chords:
-        feat_proc, decode_proc = _get_chord_processors()
-        chord_seq = decode_proc(feat_proc(str(audio_path)))
-        beat_level.append(chord_change_feature(chord_seq, beats)[:, None])
-    sampled = np.hstack([sampled] + beat_level)
-
-    # features of the previous beat for each beats (first beat is itself)
-    prev = np.vstack([sampled[0], sampled[:-1]])
-
-    # features of the next beat for each beats (first last is itself)
-    nxt = np.vstack([sampled[1:], sampled[-1]])
-
-    # difference between a beat and its neighbors
-    diff_prev = sampled - prev
-    diff_nxt = nxt - sampled
-
-    # Concaténation du contexte et des différences entre beats voisins.
-    X = np.hstack([prev, sampled, nxt, diff_prev, diff_nxt])
-    return dict(beat_times=beats, X=np.nan_to_num(X).astype('float32'))
-
+    X = np.hstack([S, diff_prev, diff_nxt, zloc])
+    return dict(beat_times=beats, X=np.nan_to_num(X).astype('float32'), names=names)
 
 def label_beats(beat_times, downbeat_times, tolerance=0.07):
     """

@@ -2,9 +2,13 @@ from hmm import STATES, load_model, build_observation_scores, viterbi
 
 A, pi = load_model()
 
+
+mesure = [0.99, 0.01, 0.01, 0.01]
+
 probas = (
-    [0.99, 0.01, 0.01, 0.01] * 4
-    + [0.99, 0.01, 0.01] * 5
+    mesure * 3
+    + [0.99, 0.01, 0.01, 0.01, 0.01]
+    + mesure * 3
     + [0.99]
 )
 

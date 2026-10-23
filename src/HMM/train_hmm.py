@@ -160,7 +160,7 @@ def estimate_initial_probs(first_measure_counts, smoothing=1.0):
 
 def run_training(annotation_dir=ANNOTATION_DIR, output_path=OUTPUT_PATH, test_fraction=0.2, seed=42, smoothing=1.0):
     if smoothing <= 0:
-        print("Le lissage doit etre strictement positif.")
+        print("Smoothing must be positive")
         return None
 
     tracks = load_tracks(annotation_dir)

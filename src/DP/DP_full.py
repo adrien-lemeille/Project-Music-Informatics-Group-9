@@ -256,7 +256,6 @@ T = np.arange(len(track_array)) / Fs
 
 
 #%%
-plt.subplot(2, 1, 2)
 plt.title("Track : "+track_id)
 plt.xlabel("Time (s)")
 plt.ylabel("Amplitude")
@@ -265,12 +264,16 @@ plt.plot(T, track_array)
 plt.grid()
 plt.show()
 
-plt.subplot(2, 1, 2)
 plt.xlabel("Time (s)")
 plt.ylabel("Amplitude")
 plt.plot(T_novelty,novelety)
-plt.vlines(dp_beats_est, ymin=0, ymax=10, colors='red')
-plt.vlines(db_truncated, ymin=0, ymax=10, colors='orange')
+plt.vlines(dp_beats_est, ymin=0, ymax=10, colors='red', alpha=0.6,linestyles='--')
+plt.grid()
+plt.show()
+
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.vlines(onset , ymin=0, ymax=10, colors='red')
 plt.grid()
 plt.show()
         
@@ -291,3 +294,109 @@ plt.show()
 
 F, cmlc, cmlt, amlc, amlt = eval_downbeats(db_truncated,dp_downbeats_est)
 print(F,cmlc, cmlt, amlc, amlt)
+#%%
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Clean scientific style
+plt.rcParams.update({
+    "font.size": 11,
+    "axes.titlesize": 12,
+    "axes.labelsize": 11,
+    "figure.dpi": 120,
+    "savefig.dpi": 300,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
+
+fig, axes = plt.subplots(
+    3, 1,
+    figsize=(14, 8),
+    sharex=True,
+    gridspec_kw={"height_ratios": [1.2, 1.5, 0.7]},
+    constrained_layout=True
+)
+
+
+
+
+axes[0].plot(
+    T, track_array,
+    
+    linewidth=0.65,
+    alpha=0.85
+)
+
+axes[0].set_title("Audio Waveform", loc="left", fontweight="bold")
+axes[0].set_ylabel("Amplitude")
+axes[0].grid(alpha=0.2)
+
+
+
+
+axes[1].plot(
+    T_novelty, novelety,
+
+    linewidth=1.2,
+    label="Novelty function"
+)
+
+axes[1].vlines(
+    onset_times,
+    ymin=0,
+    ymax=np.max(novelety),
+    colors="orange",
+    linestyles="--",
+    linewidth=1,
+    alpha=0.7,
+    label="Detected onsets"
+)
+
+axes[1].set_title(
+    "Novelty Function & Onset Detection",
+    loc="left",
+    fontweight="bold"
+)
+axes[1].set_ylabel("Novelty")
+axes[1].legend(frameon=False, loc="upper right")
+axes[1].grid(alpha=0.2)
+
+
+
+
+axes[2].vlines(
+    dp_beats_est,
+    
+    ymin=0,
+    ymax=1,
+    color="green",
+    linewidth=1.4,
+    alpha=0.85,
+    label="Estimated beats"
+)
+
+axes[2].set_title("Beat Tracking", loc="left", fontweight="bold")
+
+axes[2].set_yticks([])
+axes[2].set_ylim(0, 1.15)
+axes[2].set_xlabel("Time (s)")
+axes[2].legend(frameon=False, loc="upper right")
+axes[2].grid(axis="x", alpha=0.2)
+
+
+# --------------------------------------------------
+# Shared x-axis
+# --------------------------------------------------
+
+axes[2].set_xlim(np.min(T), np.max(T))
+
+# Optional: zoom into a specific interval
+# axes[2].set_xlim(20, 35)
+
+plt.savefig(
+    f"rhythmic_analysis_{track_id}.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.show()
